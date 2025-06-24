@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="topic-box">
+    <h2>{{ topic.title }}</h2>
+    <p><strong>{{ topic.author }}</strong></p>
+    <p>{{ topic.content }}</p>
+</div>
+
+<div class="comment-section">
+    <h3>💬 Yorumlar</h3>
+
+    {% if topic.comments %}
+        {% for comment in topic.comments %}
+            <div class="comment-box">
+                <strong>{{ comment.author }}</strong>: {{ comment.content }}
+                {% if current_user.is_authenticated and current_user.username == comment.author %}
+                    <form action="{{ url_for('delete_comment', comment_id=comment.id) }}" method="POST" style="display:inline;">
+                        <button type="submit" class="delete-button">❌</button>
+                    </form>
+                {% endif %}
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>Henüz yorum yok. İlk sen yak ortalığı 🔥</p>
+    {% endif %}
+
+    <hr>
+
+    {% if current_user.is_authenticated %}
+    <form action="{{ url_for('comment', id=topic.id) }}" method="POST">
+        <textarea name="content" placeholder="Yorumunu yaz..." required></textarea><br>
+        <button type="submit">🔥 Yorum Yap</button>
+    </form>
+    {% else %}
+    <p>Yorum yapmak için <a href="{{ url_for('login') }}">giriş yap</a>.</p>
+    {% endif %}
+</div>
+{% endblock %}

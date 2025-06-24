@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-box">
+        <h2>🔥 Kayıt Ol 🔥</h2>
+        <p class="flame-quote">Alevlerden doğ, cehenneme katıl... 🩸</p>
+        <form method="POST">
+            <input type="text" name="username" placeholder="Kullanıcı Adı" required>
+            <input type="password" name="password" placeholder="Şifre" required>
+            <button type="submit" class="btn-glow">📝 Kayıt Ol</button>
+        </form>
+        <p>Zaten hesabın var mı? <a href="{{ url_for('login') }}">🔐 Giriş Yap</a></p>
+    </div>
+</div>
+{% endblock %}
+
+<form method="POST" enctype="multipart/form-data">
+    <input type="text" name="username" placeholder="Kullanıcı Adı" required>
+    <input type="password" name="password" placeholder="Şifre" required>
+    <input type="file" name="profile_pic">
+    <button type="submit">🔥 Kayıt Ol</button>
+</form>
+
+import os
+from werkzeug.utils import secure_filename
+
+UPLOAD_FOLDER = "static/profile_pics"
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+        hashed_pw = generate_password_hash(password)
+        profile_pic = request.files.get("profile_pic")
+
+        filename = "default.png"
+        if profile_pic:
+            filename = secure_filename(profile_pic.filename)
+            profile_pic.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+
+        new_user = User(username=username, password=hashed_pw, profile_pic=filename)
+        db.session.add(new_user)
+        db.session.commit()
+        flash("Kayıt başarılı!")
+        return redirect(url_for("login"))
+    return render_template("register.html")

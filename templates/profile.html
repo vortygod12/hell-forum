@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="profile-container">
+    <h2>{{ user.username }}'in Profili</h2>
+    <img src="{{ url_for('static', filename='uploads/' + user.profile_pic) }}" alt="Profil Fotoğrafı" style="width:150px;height:150px;border-radius:50%;">
+    
+    {% if current_user.username == user.username %}
+    <form method="POST" enctype="multipart/form-data">
+        <input type="file" name="profile_pic" accept="image/*" required>
+        <button type="submit">📸 Fotoğrafı Yükle</button>
+    </form>
+    {% endif %}
+</div>
+{% endblock %}
+
+<h3>👤 Profil: {{ user.username }}</h3>
+<img src="{{ url_for('static', filename='uploads/' + user.profile_pic) }}" width="150" style="border-radius: 50%; box-shadow: 0 0 15px red;"><br><br>
+
+{% if current_user.username == user.username %}
+<form method="POST" enctype="multipart/form-data">
+    <input type="file" name="profile_pic" required>
+    <button type="submit">📷 Fotoğraf Yükle</button>
+</form>
+{% endif %}
+
+<h3>👤 Profil: {{ user.username }}</h3>
+<img src="{{ url_for('static', filename='uploads/' + user.profile_pic) }}" width="150" style="border-radius: 50%; box-shadow: 0 0 15px red;"><br><br>
+
+{% if current_user.username == user.username %}
+<form method="POST" enctype="multipart/form-data">
+    <input type="file" name="profile_pic" required>
+    <button type="submit">📷 Fotoğraf Yükle</button>
+</form>
+{% endif %}

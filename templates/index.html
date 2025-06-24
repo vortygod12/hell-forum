@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="welcome-box">
+    <h1 class="main-title">🔥 Hell Forum'a Hoş Geldin 🔥</h1>
+    <p class="subtitle">Alevlerin içinden doğan düşünceler burada buluşur...</p>
+
+    <div class="action-buttons">
+        {% if current_user.is_authenticated %}
+            <a href="{{ url_for('create') }}" class="btn-glow">🔥 Yeni Konu Aç</a>
+            <a href="{{ url_for('logout') }}" class="btn-glow">🚪 Çıkış Yap</a>
+        {% else %}
+            <a href="{{ url_for('login') }}" class="btn-glow">🔐 Giriş Yap</a>
+            <a href="{{ url_for('register') }}" class="btn-glow">📝 Kayıt Ol</a>
+        {% endif %}
+    </div>
+
+    <div class="topics-area">
+        {% for topic in topics %}
+        <div class="topic-box fire-border">
+            <h3>{{ topic.title }}</h3>
+            <p><strong>{{ topic.author }}</strong></p>
+            <p>{{ topic.content[:100] }}...</p>
+            <a href="{{ url_for('topic', id=topic.id) }}" class="btn-fire">Devamını Oku →</a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

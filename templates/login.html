@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="welcome-header">
+    <h1>🔥 Hell Forum'a Hoş Geldin 🔥</h1>
+    <p>Cehennemin kapıları senin için açık...</p>
+</div>
+
+<div class="login-container">
+    <div class="login-box">
+        <h2>🚪 Giriş Yap 🚪</h2>
+        <form method="POST">
+            <input type="text" name="username" placeholder="Kullanıcı Adı" required>
+            <input type="password" name="password" placeholder="Şifre" required>
+            <button type="submit">GİR 🔥</button>
+        </form>
+        <p>Hesabın yok mu? <a href="{{ url_for('register') }}">Kayıt Ol</a></p>
+        <p><a href="{{ url_for('home') }}">← Ana Sayfa</a></p>
+    </div>
+</div>
+{% endblock %}

@@ -15,7 +15,7 @@ login_manager = LoginManager()
 login_manager.login_view = 'login'
 login_manager.init_app(app)
 
-# 🔥 MODELLER
+# Kullanıcı modeli
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), unique=True, nullable=False)
@@ -23,39 +23,38 @@ class User(UserMixin, db.Model):
     is_admin = db.Column(db.Boolean, default=False)
     theme = db.Column(db.String(50), default="fire")
     profile_pic = db.Column(db.String(150), default="default.jpg")
-    likes = db.relationship("Like", backref="user", lazy="dynamic")
 
+# Konu modeli
 class Topic(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(255), nullable=False)
     content = db.Column(db.Text, nullable=False)
     author = db.Column(db.String(100), nullable=False)
     likes = db.relationship("Like", backref="topic", lazy="dynamic")
-    comments = db.relationship("Comment", backref="topic", lazy=True)
 
+# Yorum modeli
 class Comment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.Text, nullable=False)
     author = db.Column(db.String(100), nullable=False)
     topic_id = db.Column(db.Integer, db.ForeignKey('topic.id'), nullable=False)
+    topic = db.relationship('Topic', backref=db.backref('comments', lazy=True))
 
+# Beğeni modeli
 class Like(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     topic_id = db.Column(db.Integer, db.ForeignKey('topic.id'))
 
-# 🔥 GİRİŞ KONTROL
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# 🔥 ANASAYFA
 @app.route("/")
 def home():
     topics = Topic.query.order_by(Topic.id.desc()).all()
     return render_template("index.html", topics=topics)
 
-# 🔥 KAYIT
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
@@ -64,23 +63,23 @@ def register():
         hashed_pw = generate_password_hash(password)
 
         if User.query.filter_by(username=username).first():
-            flash("Bu kullanıcı adı zaten var.")
+            flash("Bu kullanıcı adı zaten kullanılıyor.")
             return redirect(url_for("register"))
 
         new_user = User(username=username, password=hashed_pw)
         db.session.add(new_user)
         db.session.commit()
-        flash("Kayıt başarılı!")
+        flash("Kayıt başarılı! Giriş yapabilirsin.")
         return redirect(url_for("login"))
 
     return render_template("register.html")
 
-# 🔥 GİRİŞ
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
+
         user = User.query.filter_by(username=username).first()
         if user and check_password_hash(user.password, password):
             login_user(user)
@@ -90,7 +89,6 @@ def login():
             flash("Kullanıcı adı veya şifre hatalı.")
     return render_template("login.html")
 
-# 🔥 ÇIKIŞ
 @app.route("/logout")
 @login_required
 def logout():
@@ -98,7 +96,6 @@ def logout():
     flash("Çıkış yapıldı.")
     return redirect(url_for("home"))
 
-# 🔥 KONU OLUŞTUR
 @app.route("/create", methods=["GET", "POST"])
 @login_required
 def create():
@@ -111,7 +108,6 @@ def create():
         return redirect(url_for("home"))
     return render_template("create.html")
 
-# 🔥 KONU DETAY
 @app.route("/topic/<int:id>")
 def topic(id):
     topic = Topic.query.get_or_404(id)
@@ -120,7 +116,6 @@ def topic(id):
         liked = Like.query.filter_by(user_id=current_user.id, topic_id=id).first() is not None
     return render_template("topic.html", topic=topic, liked=liked)
 
-# 🔥 YORUM EKLE
 @app.route("/topic/<int:id>/comment", methods=["POST"])
 @login_required
 def comment(id):
@@ -131,7 +126,6 @@ def comment(id):
     db.session.commit()
     return redirect(url_for("topic", id=id))
 
-# 🔥 YORUM SİL
 @app.route("/comment/<int:comment_id>/delete", methods=["POST"])
 @login_required
 def delete_comment(comment_id):
@@ -144,21 +138,21 @@ def delete_comment(comment_id):
     flash("Yorum silindi!")
     return redirect(url_for("topic", id=comment.topic_id))
 
-# 🔥 BEĞEN
 @app.route("/like/<int:topic_id>", methods=["POST"])
 @login_required
 def like(topic_id):
     topic = Topic.query.get_or_404(topic_id)
     existing_like = Like.query.filter_by(user_id=current_user.id, topic_id=topic_id).first()
+
     if existing_like:
         db.session.delete(existing_like)
     else:
         new_like = Like(user_id=current_user.id, topic_id=topic_id)
         db.session.add(new_like)
+
     db.session.commit()
     return redirect(url_for("topic", id=topic_id))
 
-# 🔥 ADMIN PANEL
 @app.route("/admin")
 @login_required
 def admin():
@@ -189,6 +183,7 @@ def edit_topic(id):
         return redirect(url_for("home"))
 
     topic = Topic.query.get_or_404(id)
+
     if request.method == "POST":
         topic.title = request.form["title"]
         topic.content = request.form["content"]
@@ -198,10 +193,10 @@ def edit_topic(id):
 
     return render_template("edit_topic.html", topic=topic)
 
-# 🔥 PROFİL
 @app.route("/profile/<username>", methods=["GET", "POST"])
 def profile(username):
     user = User.query.filter_by(username=username).first_or_404()
+
     if request.method == "POST" and current_user.username == username:
         if 'profile_pic' in request.files:
             file = request.files['profile_pic']
@@ -212,10 +207,10 @@ def profile(username):
                 current_user.profile_pic = filename
                 db.session.commit()
                 flash("Profil fotoğrafı güncellendi!")
+
     topics = Topic.query.filter_by(author=username).all()
     return render_template("profile.html", user=user, topics=topics)
 
-# 🔥 TEMA AYARLA
 @app.route("/set_theme", methods=["POST"])
 @login_required
 def set_theme():
@@ -225,13 +220,8 @@ def set_theme():
     flash("Tema güncellendi!")
     return redirect(url_for("profile", username=current_user.username))
 
-# 🔥 UYGULAMA BAŞLANGICI
 if __name__ == "__main__":
-    try:
-        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-    except FileExistsError:
-        pass
-
+    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
     with app.app_context():
         db.create_all()
     app.run(debug=True)
